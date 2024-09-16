@@ -1,4 +1,4 @@
-import mongoose, { isValidObjectId } from "mongoose";
+import mongoose, { isValidObjectId, Schema } from "mongoose";
 import { Video } from "../models/video.model.js";
 import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
@@ -14,6 +14,48 @@ const getAllVideos = asyncHandler(async (req, res) => {
 const publishAVideo = asyncHandler(async (req, res) => {
   const { title, description } = req.body;
   // TODO: get video, upload to cloudinary, create video
+
+  // Check for empty details of video or thumbnail
+  if ([title, description].some((field) => field?.trim() === "")) {
+    throw new ApiError(400, "All fields are required");
+  }
+
+  // Upload thumbnail and video to server local storage
+  const thumbnailLocalPath = req.files?.thumbnail[0]?.path;
+  const videoLocalPath = req.files?.videoFile[0]?.path;
+
+  // Check thumbnail and video both were uploaded
+  if (!(thumbnailLocalPath || videoLocalPath))
+    throw new ApiError(400, "Video and thumbnail both are required.");
+
+  const thumbnailCloudinary = await uploadOnCloudinary(thumbnailLocalPath);
+  const videoCloudinary = await uploadOnCloudinary(videoLocalPath);
+
+  if (!(thumbnailCloudinary || videoCloudinary))
+    throw new ApiError(
+      500,
+      "Error while uploading thumbnail or video to cloudinary"
+    );
+
+  // Video object
+  const video = Video.create({
+    videoFile: videoCloudinary.secure_url,
+    thumbnail: thumbnailCloudinary.secure_url,
+    title,
+    description,
+    duration: Math.round(videoCloudinary.duration, 0),
+    owner: req.user._id,
+  });
+
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { thumbnailCloudinary, videoCloudinary },
+        "Thumbnail and vide Successfully uploaded"
+      )
+    );
 });
 
 const getVideoById = asyncHandler(async (req, res) => {
