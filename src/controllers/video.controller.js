@@ -13,7 +13,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
 const publishAVideo = asyncHandler(async (req, res) => {
   const { title, description } = req.body;
-  // TODO: get video, upload to cloudinary, create video
+  // // TODO: get video, upload to cloudinary, create video
 
   // Check for empty details of video or thumbnail
   if ([title, description].some((field) => field?.trim() === "")) {
@@ -38,7 +38,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
     );
 
   // Video object
-  const video = Video.create({
+  const createdVideo = Video.create({
     videoFile: videoCloudinary.secure_url,
     thumbnail: thumbnailCloudinary.secure_url,
     title,
@@ -47,15 +47,13 @@ const publishAVideo = asyncHandler(async (req, res) => {
     owner: req.user._id,
   });
 
+  if (!createdVideo) {
+    throw new ApiError(500, "Something went wrong while creating video");
+  }
+
   res
     .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        { thumbnailCloudinary, videoCloudinary },
-        "Thumbnail and vide Successfully uploaded"
-      )
-    );
+    .json(new ApiResponse(200, createdVideo, "Video created successfully"));
 });
 
 const getVideoById = asyncHandler(async (req, res) => {
