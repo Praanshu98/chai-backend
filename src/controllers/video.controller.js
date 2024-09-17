@@ -4,7 +4,7 @@ import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { uploadOnCloudinary, deleteOnCloudinary } from "../utils/cloudinary.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
@@ -131,7 +131,39 @@ const updateVideo = asyncHandler(async (req, res) => {
 
 const deleteVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  //TODO: delete video
+  // // TODO: delete video
+
+  // Check if videoId is valid
+  if (!isValidObjectId(videoId)) {
+    throw new ApiError(400, "Invalid video id");
+  }
+
+  // Get video details
+  const video = await Video.findById(videoId);
+
+  // Check if video exists
+  if (!video) {
+    throw new ApiError(404, "Video does not exist");
+  }
+
+  console.log(video);
+
+  // Delete thumbnail and video from cloudinary
+  await deleteOnCloudinary(video.thumbnail);
+  await deleteOnCloudinary(video.videoFile, "video");
+
+  // Delete video
+  const deletedVideo = await Video.findByIdAndDelete(videoId);
+
+  console.log(deletedVideo);
+
+  if (!deletedVideo) {
+    throw new ApiError(500, "Something went wrong while deleting video");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, deletedVideo, "Video deleted successfully"));
 });
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
