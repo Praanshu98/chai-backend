@@ -168,6 +168,33 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
+
+  // Check if videoId is valid
+  if (!isValidObjectId(videoId)) {
+    throw new ApiError(400, "Invalid video id");
+  }
+
+  // Get video details
+  const video = await Video.findById(videoId);
+
+  // Update publish status
+  const updatedVideo = await Video.findOneAndUpdate(
+    new mongoose.Types.ObjectId(videoId),
+    {
+      $set: {
+        isPublished: !video.isPublished,
+      },
+    },
+    { new: true }
+  );
+
+  if (!updatedVideo) {
+    throw new ApiError(500, "Something went wrong while updating video");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedVideo, "Video updated successfully"));
 });
 
 export {
