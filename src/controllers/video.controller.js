@@ -146,16 +146,12 @@ const deleteVideo = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Video does not exist");
   }
 
-  console.log(video);
-
   // Delete thumbnail and video from cloudinary
   await deleteOnCloudinary(video.thumbnail);
   await deleteOnCloudinary(video.videoFile, "video");
 
   // Delete video
   const deletedVideo = await Video.findByIdAndDelete(videoId);
-
-  console.log(deletedVideo);
 
   if (!deletedVideo) {
     throw new ApiError(500, "Something went wrong while deleting video");
