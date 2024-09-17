@@ -30,13 +30,11 @@ const deleteOnCloudinary = async (cloudinaryUrl, resource_type = "image") => {
     if (!cloudinaryUrl) return new ApiError(400, "Cloudinary url is required");
 
     const publicId = cloudinaryUrl.split("/").pop().split(".")[0];
-    console.log(publicId);
 
     // delete the file on cloudinary
     const response = await cloudinary.uploader.destroy(publicId, {
       resource_type,
     });
-    console.log(response);
 
     // file has been deleted successfully
     return response;
