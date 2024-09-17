@@ -38,7 +38,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
     );
 
   // Video object
-  const createdVideo = Video.create({
+  const createdVideo = await Video.create({
     videoFile: videoCloudinary.secure_url,
     thumbnail: thumbnailCloudinary.secure_url,
     title,
