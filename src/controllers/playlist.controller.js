@@ -139,6 +139,42 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
 const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
   const { playlistId, videoId } = req.params;
   // TODO: remove video from playlist
+
+  // Check if playlistId is valid
+  if (!isValidObjectId(playlistId)) {
+    throw new ApiError(400, "Invalid playlist id");
+  }
+
+  // Check if videoId is valid
+  if (!isValidObjectId(videoId)) {
+    throw new ApiError(400, "Invalid video id");
+  }
+
+  // Check if video is in playlist
+  const isVideoInPlaylist = await Playlist.find({
+    video: { $in: [videoId] },
+  });
+  if (isVideoInPlaylist.length === 0) {
+    throw new ApiError(400, "Video is not in playlist");
+  }
+
+  // Delete video from playlist
+  const updatedPlaylist = await Playlist.findOneAndUpdate(
+    new mongoose.Types.ObjectId(playlistId),
+    {
+      $pull: {
+        videos: videoId,
+      },
+    }
+  );
+
+  if (!updatedPlaylist) {
+    throw new ApiError(500, "Something went wrong while updating playlist");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedPlaylist, "Video removed from playlist"));
 });
 
 const deletePlaylist = asyncHandler(async (req, res) => {
