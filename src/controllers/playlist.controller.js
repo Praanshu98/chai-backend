@@ -15,6 +15,15 @@ const createPlaylist = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Name and description are required");
   }
 
+  // check if playlist with same name already exists
+  const playlistWithSameName = await Playlist.findOne({
+    name,
+    owner: req.user._id,
+  });
+  if (playlistWithSameName) {
+    throw new ApiError(400, "Playlist with same name already exists");
+  }
+
   // Create playlist
   const createdPlaylist = await Playlist.create({
     name,
