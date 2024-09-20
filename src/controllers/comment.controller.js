@@ -64,10 +64,10 @@ const updateComment = asyncHandler(async (req, res) => {
   }
 
   // Check if comment exists
-  // const comment = await Comment.findById(commentId);
-  // if (!comment) {
-  //   throw new ApiError(404, "Comment does not exist");
-  // }
+  const comment = await Comment.findById(commentId);
+  if (!comment) {
+    throw new ApiError(404, "Comment does not exist");
+  }
 
   // Update comment
   const updatedComment = await Comment.findOneAndUpdate(
