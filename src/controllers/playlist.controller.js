@@ -87,6 +87,53 @@ const getPlaylistById = asyncHandler(async (req, res) => {
 
 const addVideoToPlaylist = asyncHandler(async (req, res) => {
   const { playlistId, videoId } = req.params;
+
+  // Check if playlistId is valid
+  if (!isValidObjectId(playlistId)) {
+    throw new ApiError(400, "Invalid playlist id");
+  }
+
+  // Check if videoId is valid
+  if (!isValidObjectId(videoId)) {
+    throw new ApiError(400, "Invalid video id");
+  }
+
+  // Get playlist by id
+  const playlist = await Playlist.findById(playlistId);
+
+  if (!playlist) {
+    throw new ApiError(500, "Something went wrong while getting playlist");
+  }
+
+  // Check if video is already in playlist
+  const isVideoInPlaylist = playlist.videos.find((video) =>
+    video.equals(new mongoose.Types.ObjectId(videoId))
+  );
+
+  if (isVideoInPlaylist) {
+    throw new ApiError(400, "Video is already in playlist");
+  }
+
+  // Add video to playlist
+  const updatedPlaylist = await Playlist.findOneAndUpdate(
+    new mongoose.Types.ObjectId(playlistId),
+    {
+      $push: {
+        videos: videoId,
+      },
+    },
+    { new: true }
+  );
+
+  if (!updatedPlaylist) {
+    throw new ApiError(500, "Something went wrong while updating playlist");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, updatedPlaylist, "Playlist updated successfully")
+    );
 });
 
 const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
