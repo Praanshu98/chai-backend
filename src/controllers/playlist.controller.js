@@ -204,6 +204,44 @@ const updatePlaylist = asyncHandler(async (req, res) => {
   const { playlistId } = req.params;
   const { name, description } = req.body;
   //TODO: update playlist
+
+  // Check if playlistId is valid
+  if (!isValidObjectId(playlistId)) {
+    throw new ApiError(400, "Invalid playlist id");
+  }
+
+  // Check if name and description are empty
+  if (!name?.trim() || !description?.trim()) {
+    throw new ApiError(400, "Name and description are required");
+  }
+
+  // Get playlist by id
+  const playlist = await Playlist.findById(playlistId);
+
+  if (!playlist) {
+    throw new ApiError(404, "Playlist does not exist");
+  }
+
+  // Update playlist
+  const updatedPlaylist = await Playlist.findOneAndUpdate(
+    new mongoose.Types.ObjectId(playlistId),
+    {
+      $set: {
+        name,
+        description,
+      },
+    },
+    { new: true }
+  );
+  if (!updatedPlaylist) {
+    throw new ApiError(500, "Something went wrong while updating playlist");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, updatedPlaylist, "Playlist updated successfully")
+    );
 });
 
 export {
