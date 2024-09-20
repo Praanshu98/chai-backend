@@ -50,6 +50,42 @@ const addComment = asyncHandler(async (req, res) => {
 
 const updateComment = asyncHandler(async (req, res) => {
   // TODO: update a comment
+  const { commentId } = req.params;
+  const { content } = req.body;
+
+  // Check if commentId is valid
+  if (!isValidObjectId(commentId)) {
+    throw new ApiError(400, "Invalid comment id");
+  }
+
+  // Check if content is empty
+  if (!content?.trim()) {
+    throw new ApiError(400, "Content is required");
+  }
+
+  // Check if comment exists
+  // const comment = await Comment.findById(commentId);
+  // if (!comment) {
+  //   throw new ApiError(404, "Comment does not exist");
+  // }
+
+  // Update comment
+  const updatedComment = await Comment.findOneAndUpdate(
+    new mongoose.Types.ObjectId(commentId),
+    {
+      $set: {
+        content,
+      },
+    },
+    { new: true }
+  );
+  if (!updatedComment) {
+    throw new ApiError(500, "Something went wrong while updating comment");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedComment, "Comment updated successfully"));
 });
 
 const deleteComment = asyncHandler(async (req, res) => {
