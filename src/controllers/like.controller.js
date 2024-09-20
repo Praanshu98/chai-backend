@@ -4,6 +4,8 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { Video } from "../models/video.model.js";
+import { Comment } from "../models/comment.model.js";
+import { Tweet } from "../models/tweet.model.js";
 
 const toggleVideoLike = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
@@ -116,6 +118,55 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
 const toggleTweetLike = asyncHandler(async (req, res) => {
   const { tweetId } = req.params;
   //TODO: toggle like on tweet
+
+  // Check if tweetId is valid
+  if (!isValidObjectId(tweetId)) {
+    throw new ApiError(400, "Invalid tweet id");
+  }
+
+  // Get tweet details
+  const tweet = await Tweet.findById(tweetId);
+
+  // Check if tweet exists
+  if (!tweet) {
+    throw new ApiError(404, "Tweet does not exist");
+  }
+
+  // Check if tweet is already liked by the user
+  const isTweetAlreadyLiked = await Like.findOne({
+    tweet: tweetId,
+    likedBy: req.user._id,
+  });
+
+  // Delete like if already liked
+  if (isTweetAlreadyLiked) {
+    const deletedLike = await Like.findOneAndDelete({
+      tweet: tweetId,
+      likedBy: req.user._id,
+    });
+
+    if (!deletedLike) {
+      throw new ApiError(500, "Something went wrong while deleting like");
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, deletedLike, "Like deleted successfully"));
+  }
+
+  // Create like for tweet
+  const createdLike = await Like.create({
+    tweet: tweetId,
+    likedBy: req.user._id,
+  });
+
+  if (!createdLike) {
+    throw new ApiError(500, "Something went wrong while creating like");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, createdLike, "Like created successfully"));
 });
 
 const getLikedVideos = asyncHandler(async (req, res) => {
