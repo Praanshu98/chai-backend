@@ -26,7 +26,27 @@ const toggleSubscription = asyncHandler(async (req, res) => {
   });
 
   if (isSubscribed) {
-    throw new ApiError(400, "You are already subscribed to this channel");
+    const deletedSubscription = await Subscription.findOneAndDelete({
+      subscriber: req.user._id,
+      channel: channelId,
+    });
+
+    if (!deletedSubscription) {
+      throw new ApiError(
+        500,
+        "Something went wrong while deleting subscription"
+      );
+    }
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          deletedSubscription,
+          "Subscription deleted successfully"
+        )
+      );
   }
 
   // Create subscription
