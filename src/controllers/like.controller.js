@@ -171,6 +171,22 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
 
 const getLikedVideos = asyncHandler(async (req, res) => {
   //TODO: get all liked videos
+
+  // Get all liked videos
+  const likedVideos = await Like.find({
+    likedBy: req.user._id,
+    video: { $exists: true },
+  });
+
+  if (!likedVideos) {
+    throw new ApiError(500, "Something went wrong while getting liked videos");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, likedVideos, "Liked videos fetched successfully")
+    );
 });
 
 export { toggleCommentLike, toggleTweetLike, toggleVideoLike, getLikedVideos };
